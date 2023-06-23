@@ -1,4 +1,5 @@
 import { css } from "@linaria/core";
+import Button from "react-bootstrap/Button";
 
 // Write your styles in `css` tag
 const textTest = css`
@@ -9,7 +10,11 @@ const textTest = css`
 `;
 
 export function MainPage() {
-	return <div className={textTest}>text</div>;
+	return (
+		<div className={textTest}>
+			<Button>test</Button>
+		</div>
+	);
 }
 
 export default MainPage;
