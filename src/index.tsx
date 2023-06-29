@@ -1,10 +1,10 @@
 import { createRoot } from "react-dom/client";
 import { StrictMode } from "react";
-import "./index.scss";
 import { MainPage } from "./pages";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "./index.scss";
 
 const rootElement = document.getElementById("root");
 

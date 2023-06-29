@@ -12,12 +12,12 @@ export type DragType = {
 	index: number;
 };
 
-export const DragElement = ({
+export function DragElement({
 	children,
 	className = "",
 	type,
 	index,
-}: DragElementProps) => {
+}: DragElementProps) {
 	const [{ isDragging }, drag] = useDrag({
 		type,
 		item: { type, index },
@@ -28,6 +28,6 @@ export const DragElement = ({
 		},
 	});
 	return <div ref={drag}>{children}</div>;
-};
+}
 
 export default DragElement;

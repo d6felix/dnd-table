@@ -1,100 +1,140 @@
-//import { css } from "@linaria/core";
-import Table from "react-bootstrap/Table";
+//import { css } from "@linaria/core";S
 import {
-	createColumnHelper,
+	ColumnDef,
+	Row,
 	flexRender,
 	getCoreRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
-import { useReducer, useState } from "react";
-import Button from "react-bootstrap/Button";
+import { useState } from "react";
+import { makeData, Person } from "./makeData";
+import { useDrag, useDrop } from "react-dnd";
+import { Table } from "react-bootstrap";
 
-type Person = {
-	firstName: string;
-	lastName: string;
-	age: number;
-	visits: number;
-	status: string;
-	progress: number;
+const defaultColumns: ColumnDef<Person>[] = [
+	{
+		header: "Name",
+		footer: (props) => props.column.id,
+		columns: [
+			{
+				accessorKey: "firstName",
+				header: "First Name",
+				footer: (props) => props.column.id,
+			},
+			{
+				accessorKey: "lastName",
+				header: "Last Name",
+				footer: (props) => props.column.id,
+			},
+		],
+	},
+	{
+		header: "Info",
+		footer: (props) => props.column.id,
+		columns: [
+			{
+				accessorKey: "age",
+				header: () => "Age",
+				footer: (props) => props.column.id,
+			},
+			{
+				header: "More Info",
+				footer: (props) => props.column.id,
+				columns: [
+					{
+						accessorKey: "visits",
+						header: () => "Visits",
+						footer: (props) => props.column.id,
+					},
+					{
+						accessorKey: "status",
+						header: "Status",
+						footer: (props) => props.column.id,
+					},
+					{
+						accessorKey: "progress",
+						header: "Profile Progress",
+						footer: (props) => props.column.id,
+					},
+				],
+			},
+		],
+	},
+];
+
+interface DraggableRowProps {
+	row: Row<Person>;
+	reorderRow: (draggedRowIndex: number, targetRowIndex: number) => void;
+}
+
+const DraggableRow = ({ row, reorderRow }: DraggableRowProps) => {
+	const [, dropRef] = useDrop({
+		accept: "row",
+		drop: (draggedRow: Row<Person>) => reorderRow(draggedRow.index, row.index),
+	});
+
+	const [{ isDragging }, dragRef, previewRef] = useDrag({
+		collect: (monitor) => ({
+			isDragging: monitor.isDragging(),
+		}),
+		item: () => row,
+		type: "row",
+	});
+
+	return (
+		<tr
+			ref={previewRef} //previewRef could go here
+			style={{ opacity: isDragging ? 0.5 : 1 }}
+		>
+			<td ref={dropRef}>
+				<button ref={dragRef}>🟰</button>
+			</td>
+			{row.getVisibleCells().map((cell) => (
+				<td key={cell.id}>
+					{flexRender(cell.column.columnDef.cell, cell.getContext())}
+				</td>
+			))}
+		</tr>
+	);
 };
 
-const defaultData: Person[] = [
-	{
-		firstName: "tanner",
-		lastName: "linsley",
-		age: 24,
-		visits: 100,
-		status: "In Relationship",
-		progress: 50,
-	},
-	{
-		firstName: "tandy",
-		lastName: "miller",
-		age: 40,
-		visits: 40,
-		status: "Single",
-		progress: 80,
-	},
-	{
-		firstName: "joe",
-		lastName: "dirte",
-		age: 45,
-		visits: 20,
-		status: "Complicated",
-		progress: 10,
-	},
-];
-
-const columnHelper = createColumnHelper<Person>();
-
-const columns = [
-	columnHelper.accessor("firstName", {
-		cell: (info) => info.getValue(),
-		footer: (info) => info.column.id,
-	}),
-	columnHelper.accessor((row) => row.lastName, {
-		id: "lastName",
-		cell: (info) => <i>{info.getValue()}</i>,
-		header: () => <span>Last Name</span>,
-		footer: (info) => info.column.id,
-	}),
-	columnHelper.accessor("age", {
-		header: () => "Age",
-		cell: (info) => info.renderValue(),
-		footer: (info) => info.column.id,
-	}),
-	columnHelper.accessor("visits", {
-		header: () => <span>Visits</span>,
-		footer: (info) => info.column.id,
-	}),
-	columnHelper.accessor("status", {
-		header: "Status",
-		footer: (info) => info.column.id,
-	}),
-	columnHelper.accessor("progress", {
-		header: "Profile Progress",
-		footer: (info) => info.column.id,
-	}),
-];
-
 export function MainPage() {
-	const [data, setData] = useState(() => [...defaultData]);
-	const rerender = useReducer(() => ({}), {})[1];
+	const [columns] = useState(() => [...defaultColumns]);
+	const [data, setData] = useState(() => makeData(20));
+
+	const reorderRow = (draggedRowIndex: number, targetRowIndex: number) => {
+		data.splice(targetRowIndex, 0, data.splice(draggedRowIndex, 1)[0]);
+		setData([...data]);
+	};
+
+	const rerender = () => setData(() => makeData(20));
 
 	const table = useReactTable({
 		data,
 		columns,
 		getCoreRowModel: getCoreRowModel(),
+		getRowId: (row) => row.userId, //good to have guaranteed unique row ids/keys for rendering
+		debugTable: true,
+		debugHeaders: true,
+		debugColumns: true,
 	});
 
 	return (
-		<>
+		<div className="p-2">
+			<div className="h-4" />
+			<div className="flex flex-wrap gap-2">
+				<button onClick={() => rerender()} className="border p-1">
+					Regenerate
+				</button>
+			</div>
+			<div className="h-4" />
 			<Table striped bordered hover>
 				<thead>
 					{table.getHeaderGroups().map((headerGroup) => (
 						<tr key={headerGroup.id}>
+							<th />
 							{headerGroup.headers.map((header) => (
-								<th key={header.id}>
+								<th key={header.id} colSpan={header.colSpan}>
 									{header.isPlaceholder
 										? null
 										: flexRender(
@@ -108,34 +148,28 @@ export function MainPage() {
 				</thead>
 				<tbody>
 					{table.getRowModel().rows.map((row) => (
-						<tr key={row.id}>
-							{row.getVisibleCells().map((cell) => (
-								<td key={cell.id}>
-									{flexRender(cell.column.columnDef.cell, cell.getContext())}
-								</td>
-							))}
-						</tr>
+						<DraggableRow key={row.id} row={row} reorderRow={reorderRow} />
 					))}
 				</tbody>
 				<tfoot>
 					{table.getFooterGroups().map((footerGroup) => (
 						<tr key={footerGroup.id}>
-							{footerGroup.headers.map((header) => (
-								<th key={header.id}>
-									{header.isPlaceholder
+							<th />
+							{footerGroup.headers.map((footer) => (
+								<th key={footer.id} colSpan={footer.colSpan}>
+									{footer.isPlaceholder
 										? null
 										: flexRender(
-												header.column.columnDef.footer,
-												header.getContext()
+												footer.column.columnDef.footer,
+												footer.getContext()
 										  )}
 								</th>
 							))}
 						</tr>
 					))}
 				</tfoot>
-			</Table>{" "}
-			<Button onClick={() => rerender()}>Rerender</Button>
-		</>
+			</Table>
+		</div>
 	);
 }
 
