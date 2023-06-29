@@ -9,10 +9,12 @@ import {
 import { useState } from "react";
 import { makeData, Person } from "./makeData";
 import { useDrag, useDrop } from "react-dnd";
-import { Table } from "react-bootstrap";
+import { Button, Table } from "react-bootstrap";
+import { CheckGroup } from "~components/CheckGroup";
 
 const defaultColumns: ColumnDef<Person>[] = [
 	{
+		accessorKey: "name",
 		header: "Name",
 		footer: (props) => props.column.id,
 		columns: [
@@ -29,12 +31,13 @@ const defaultColumns: ColumnDef<Person>[] = [
 		],
 	},
 	{
+		accessorKey: "info",
 		header: "Info",
 		footer: (props) => props.column.id,
 		columns: [
 			{
 				accessorKey: "age",
-				header: () => "Age",
+				header: "Age",
 				footer: (props) => props.column.id,
 			},
 			{
@@ -43,7 +46,7 @@ const defaultColumns: ColumnDef<Person>[] = [
 				columns: [
 					{
 						accessorKey: "visits",
-						header: () => "Visits",
+						header: "Visits",
 						footer: (props) => props.column.id,
 					},
 					{
@@ -99,35 +102,50 @@ const DraggableRow = ({ row, reorderRow }: DraggableRowProps) => {
 };
 
 export function MainPage() {
-	const [columns] = useState(() => [...defaultColumns]);
-	const [data, setData] = useState(() => makeData(20));
+	const [columns] = useState(defaultColumns);
+	const [data, setData] = useState(makeData(20));
+	const [columnVisibility, setColumnVisibility] = useState({});
 
 	const reorderRow = (draggedRowIndex: number, targetRowIndex: number) => {
 		data.splice(targetRowIndex, 0, data.splice(draggedRowIndex, 1)[0]);
 		setData([...data]);
 	};
 
-	const rerender = () => setData(() => makeData(20));
+	const rerender = () => setData(makeData(20));
 
 	const table = useReactTable({
 		data,
 		columns,
+		state: {
+			columnVisibility,
+		},
+		onColumnVisibilityChange: setColumnVisibility,
 		getCoreRowModel: getCoreRowModel(),
-		getRowId: (row) => row.userId, //good to have guaranteed unique row ids/keys for rendering
+		getRowId: (row) => row.userId,
 		debugTable: true,
 		debugHeaders: true,
 		debugColumns: true,
 	});
 
+	console.log();
+
+	const checkGroupProps = table.getAllLeafColumns().map((column) => {
+		return {
+			checked: column.getIsVisible(),
+			label: column.id,
+			onChange: column.getToggleVisibilityHandler(),
+		};
+	});
+
 	return (
-		<div className="p-2">
-			<div className="h-4" />
-			<div className="flex flex-wrap gap-2">
-				<button onClick={() => rerender()} className="border p-1">
+		<div className="p-2 m-4">
+			<div className="d-flex flex-row gap-4 mb-5">
+				<Button onClick={rerender} className="border p-4">
 					Regenerate
-				</button>
+				</Button>
+				<h1>Table with fake data</h1>
+				<CheckGroup control={checkGroupProps}></CheckGroup>
 			</div>
-			<div className="h-4" />
 			<Table striped bordered hover>
 				<thead>
 					{table.getHeaderGroups().map((headerGroup) => (

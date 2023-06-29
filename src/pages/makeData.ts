@@ -11,14 +11,6 @@ export type Person = {
 	subRows?: Person[];
 };
 
-const range = (len: number) => {
-	const arr = [];
-	for (let i = 0; i < len; i++) {
-		arr.push(i);
-	}
-	return arr;
-};
-
 const newPerson = (): Person => {
 	return {
 		userId: faker.string.uuid(),
@@ -35,16 +27,8 @@ const newPerson = (): Person => {
 	};
 };
 
-export function makeData(...lens: number[]) {
-	const makeDataLevel = (depth = 0): Person[] => {
-		const len = lens[depth];
-		return range(len).map((): Person => {
-			return {
-				...newPerson(),
-				subRows: lens[depth + 1] ? makeDataLevel(depth + 1) : undefined,
-			};
-		});
-	};
-
-	return makeDataLevel();
+export function makeData(length: number): Person[] {
+	return Array.from({ length })
+		.fill("")
+		.map(() => newPerson());
 }
