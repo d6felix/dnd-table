@@ -1,3 +1,17 @@
-# Project template
+# Описание проекта
 
-Template for my projects on React.
+Простая таблица с отображением фековых сгенерированных данных
+
+## Основные технологии
+
+ - React
+ - tanstack/table
+ - bootstrap-react
+ - linaria (headless css in js)
+ - react-dnd
+
+### Основные возможноти
+
+ - спрятать столбцы
+ - менять размер столбцов
+ - менять порядок строк
