@@ -2,7 +2,6 @@ import { css } from "@linaria/core";
 
 import {
 	ColumnDef,
-	ColumnResizeMode,
 	Row,
 	flexRender,
 	getCoreRowModel,
@@ -38,48 +37,39 @@ const defaultColumns: ColumnDef<Person>[] = [
 	{
 		accessorKey: "name",
 		header: "Name",
-		footer: (props) => props.column.id,
 		columns: [
 			{
 				accessorKey: "firstName",
 				header: "First Name",
-				footer: (props) => props.column.id,
 			},
 			{
 				accessorKey: "lastName",
 				header: "Last Name",
-				footer: (props) => props.column.id,
 			},
 		],
 	},
 	{
 		accessorKey: "info",
 		header: "Info",
-		footer: (props) => props.column.id,
 		columns: [
 			{
 				accessorKey: "age",
 				header: "Age",
-				footer: (props) => props.column.id,
 			},
 			{
 				header: "More Info",
-				footer: (props) => props.column.id,
 				columns: [
 					{
 						accessorKey: "visits",
 						header: "Visits",
-						footer: (props) => props.column.id,
 					},
 					{
 						accessorKey: "status",
 						header: "Status",
-						footer: (props) => props.column.id,
 					},
 					{
 						accessorKey: "progress",
 						header: "Profile Progress",
-						footer: (props) => props.column.id,
 					},
 				],
 			},
@@ -129,7 +119,6 @@ export function MainPage() {
 	const [columns] = useState(defaultColumns);
 	const [data, setData] = useState(makeData(20));
 	const [columnVisibility, setColumnVisibility] = useState({});
-	const [columnResizeMode] = useState<ColumnResizeMode>("onChange");
 
 	const reorderRow = (draggedRowIndex: number, targetRowIndex: number) => {
 		data.splice(targetRowIndex, 0, data.splice(draggedRowIndex, 1)[0]);
@@ -141,7 +130,7 @@ export function MainPage() {
 	const table = useReactTable({
 		data,
 		columns,
-		columnResizeMode,
+		columnResizeMode: "onChange",
 		state: {
 			columnVisibility,
 		},
@@ -162,15 +151,16 @@ export function MainPage() {
 	});
 
 	return (
-		<div className="p-2 m-4">
+		<div className="p-2 m-4 d-flex flex-column justify-content-center align-items-center mw-100">
+			<h1>Table with fake data</h1>
 			<div className="d-flex flex-row gap-4 mb-5">
-				<Button onClick={rerender} className="border p-4">
+				<Button onClick={rerender} className="border p-4 h-25">
 					Regenerate
 				</Button>
-				<h1>Table with fake data</h1>
-				<CheckGroup control={checkGroupProps}></CheckGroup>
+				<CheckGroup className="p-0" control={checkGroupProps}></CheckGroup>
 			</div>
 			<Table
+				className="mw-100"
 				striped
 				bordered
 				hover
@@ -202,16 +192,6 @@ export function MainPage() {
 											onMouseDown: header.getResizeHandler(),
 											onTouchStart: header.getResizeHandler(),
 											className: `${resizer}`,
-											style: {
-												transform:
-													columnResizeMode === "onEnd" &&
-													header.column.getIsResizing()
-														? `translateX(${
-																table.getState().columnSizingInfo.deltaOffset ??
-																0
-														  }px)`
-														: "",
-											},
 										}}
 									/>
 								</th>
@@ -224,23 +204,6 @@ export function MainPage() {
 						<DraggableRow key={row.id} row={row} reorderRow={reorderRow} />
 					))}
 				</tbody>
-				<tfoot>
-					{table.getFooterGroups().map((footerGroup) => (
-						<tr key={footerGroup.id}>
-							<th />
-							{footerGroup.headers.map((footer) => (
-								<th key={footer.id} colSpan={footer.colSpan}>
-									{footer.isPlaceholder
-										? null
-										: flexRender(
-												footer.column.columnDef.footer,
-												footer.getContext()
-										  )}
-								</th>
-							))}
-						</tr>
-					))}
-				</tfoot>
 			</Table>
 		</div>
 	);
