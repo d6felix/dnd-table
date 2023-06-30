@@ -1,6 +1,8 @@
-//import { css } from "@linaria/core";S
+import { css } from "@linaria/core";
+
 import {
 	ColumnDef,
+	ColumnResizeMode,
 	Row,
 	flexRender,
 	getCoreRowModel,
@@ -11,6 +13,26 @@ import { makeData, Person } from "./makeData";
 import { useDrag, useDrop } from "react-dnd";
 import { Button, Table } from "react-bootstrap";
 import { CheckGroup } from "~components/CheckGroup";
+
+const resizer = css`
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 100%;
+	width: 5px;
+	background: rgba(0, 0, 0, 0.5);
+	cursor: col-resize;
+	user-select: none;
+	touch-action: none;
+	opacity: 0.5;
+`;
+
+const th = css`
+	background-color: unset !important;
+	position: relative;
+	text-align: center;
+	height: 30px;
+`;
 
 const defaultColumns: ColumnDef<Person>[] = [
 	{
@@ -85,15 +107,17 @@ const DraggableRow = ({ row, reorderRow }: DraggableRowProps) => {
 	});
 
 	return (
-		<tr
-			ref={previewRef} //previewRef could go here
-			style={{ opacity: isDragging ? 0.5 : 1 }}
-		>
+		<tr ref={previewRef} style={{ opacity: isDragging ? 0.5 : 1 }}>
 			<td ref={dropRef}>
 				<button ref={dragRef}>🟰</button>
 			</td>
 			{row.getVisibleCells().map((cell) => (
-				<td key={cell.id}>
+				<td
+					key={cell.id}
+					style={{
+						width: cell.column.getSize(),
+					}}
+				>
 					{flexRender(cell.column.columnDef.cell, cell.getContext())}
 				</td>
 			))}
@@ -105,6 +129,7 @@ export function MainPage() {
 	const [columns] = useState(defaultColumns);
 	const [data, setData] = useState(makeData(20));
 	const [columnVisibility, setColumnVisibility] = useState({});
+	const [columnResizeMode] = useState<ColumnResizeMode>("onChange");
 
 	const reorderRow = (draggedRowIndex: number, targetRowIndex: number) => {
 		data.splice(targetRowIndex, 0, data.splice(draggedRowIndex, 1)[0]);
@@ -116,6 +141,7 @@ export function MainPage() {
 	const table = useReactTable({
 		data,
 		columns,
+		columnResizeMode,
 		state: {
 			columnVisibility,
 		},
@@ -126,8 +152,6 @@ export function MainPage() {
 		debugHeaders: true,
 		debugColumns: true,
 	});
-
-	console.log();
 
 	const checkGroupProps = table.getAllLeafColumns().map((column) => {
 		return {
@@ -146,19 +170,50 @@ export function MainPage() {
 				<h1>Table with fake data</h1>
 				<CheckGroup control={checkGroupProps}></CheckGroup>
 			</div>
-			<Table striped bordered hover>
+			<Table
+				striped
+				bordered
+				hover
+				style={{
+					width: table.getCenterTotalSize(),
+				}}
+			>
 				<thead>
 					{table.getHeaderGroups().map((headerGroup) => (
 						<tr key={headerGroup.id}>
 							<th />
 							{headerGroup.headers.map((header) => (
-								<th key={header.id} colSpan={header.colSpan}>
+								<th
+									key={header.id}
+									colSpan={header.colSpan}
+									className={th}
+									style={{
+										width: header.getSize(),
+									}}
+								>
 									{header.isPlaceholder
 										? null
 										: flexRender(
 												header.column.columnDef.header,
 												header.getContext()
 										  )}
+									<div
+										{...{
+											onMouseDown: header.getResizeHandler(),
+											onTouchStart: header.getResizeHandler(),
+											className: `${resizer}`,
+											style: {
+												transform:
+													columnResizeMode === "onEnd" &&
+													header.column.getIsResizing()
+														? `translateX(${
+																table.getState().columnSizingInfo.deltaOffset ??
+																0
+														  }px)`
+														: "",
+											},
+										}}
+									/>
 								</th>
 							))}
 						</tr>
